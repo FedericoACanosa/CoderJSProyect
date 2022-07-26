@@ -1,7 +1,7 @@
 
 let limite = parseInt(prompt("Ingresa un número"))
 
-for (let i = 0; i < limite; i++){
+for (let i = 0; i <= limite; i++){
 
     console.log("Iteración Nro,", i);
 
