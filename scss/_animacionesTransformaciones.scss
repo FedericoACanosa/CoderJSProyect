@@ -1,0 +1,25 @@
+/*-----------TRANSFORMACIONES Y ANIMACIONES-------------*/
+
+.linear-gradient{
+	background: linear-gradient(to top, #c79fc0, white);
+}
+
+.scale:hover{
+	transform: scale(1.1);
+	cursor: pointer;
+}
+
+@keyframes animateArticle{
+	0%{width: 400px;}
+	25%{width: 500px;}
+	50%{width: 600px; background-color:#373e4a;}
+	100%{width: 500px;}
+}
+
+.animate{
+	animation-name: animateArticle;
+	animation-iteration-count: 1;
+	animation-timing-function: ease;
+	animation-duration: 5s;
+	animation-delay: 1s;
+}

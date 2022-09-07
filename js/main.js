@@ -1,169 +1,152 @@
-let carritoDeCompras = []
+//modularizacion para acomodar el proyecto
+import { obtenerDatos } from './turnos.js'
 
-const contenedorProductos = document.getElementById('contenedor-productos');
-const contenedorCarrito = document.getElementById('carrito-contenedor');
+const domTurnos = document.getElementById('mainTurnos')
+const domCarrito = document.getElementById('carrito')
+const fCompra = document.getElementById('finCompra')
 
-const botonTerminar = document.getElementById('terminar')
-const finCompra = document.getElementById('fin-compra')
-
-const contadorCarrito = document.getElementById('contadorCarrito');
-const precioTotal = document.getElementById('precioTotal');
-
-const selecPrecios = document.getElementById('selecPrecios')
-const buscador = document.getElementById('search')
-
-//Diccionario de el filtro
-
-// const diccionarioDelFiltros = [
-//     {min: 0, max: 900},
-//     {min: 1000, max: 1500},
-//     {min: 1600, max: 2000},
-// ]
-
-//hacemos el Filtro
-
-    // selecPrecios.addEventListener('change',()=>{
-
-    // let productosFiltrados;
-
-    //     if (selecPrecios.value == 'all') productosFiltrados = stockProductos
-    //     else if (selecPrecios.value == '3') productosFiltrados = stockProductos.filter(item => item.precio >= 2000)
-    //     else productosFiltrados = stockProductos.filter(item => item.precio >= diccionarioDelFiltros[selecPrecios.value].min && item.precio <= diccionarioDelFiltros[selecPrecios.value].max )
-
-    //     mostrarProductos (productosFiltrados)
-    // })
-
-    selecPrecios.addEventListener('change',()=>{
-
-        console.log(selecPrecios.value)
-        if(selecPrecios.value == 'all'){
-            mostrarProductos(stockProductos)
-        }else{
-            let arrayNuevo = stockProductos.filter(item => item.tipo == selecPrecios.value)
-            
-            //array nuevo
-    
-            mostrarProductos(arrayNuevo)
-        }
-    })
+let carrito = []
 
 
-//EL STOCK
-let stockProductos = [
-	{id:1, nombre: "Body tigre", precio: 900, tipo: 1, desc: "Body de frizza estampado para bebé",  demora: "40min", img: './img/prod1.png'},
-	{id:2, nombre: "Jean wide leg", precio: 2300, tipo: 4, desc: "Jean elastizado con roturas y corte Oxford", demora: "3hs", img:'./img/prod2.png'},
-	{id:3, nombre: "Jean roturas", precio: 1700, tipo: 3, desc: "Jean elastizado con roturas, estampado y corte Oxford", demora: "4hs", img:'./img/prod3.png'},
-	{id:4, nombre: "Jean roturas/razgados", precio: 4200, tipo: 4, desc: "Jeans elastizados con rotaras y/o razgados", demora: "60min", img:'./img/prod4.png'},
-	{id:5, nombre: "Buzo anime", precio: 1200, tipo: 2, desc: "Buzo de algodón estampado.", demora: "45min", img:'./img/prod5.png'},
-	{id:6, nombre: "Buzo Smile", precio: 2100, tipo: 4, desc: "Buzo de frizza con estampado. ", demora: "3hs", img:'./img/prod6.png'},
-] 
+//evento para cuando se carga la pagina, ejecute la funcion
+window.addEventListener('DOMContentLoaded', () =>{
+	renderizarDOM()
+})
 
-//Buscador o search
+const renderizarDOM = async() =>{
+	let productosVista = ''
+	let productos = await obtenerDatos()
+ 	productos.forEach(producto =>{
+		const {img, nombre, demora, precio, desc, id} = producto
+		{
+			productosVista += `
+				<div class="card mb-3 scale" style="max-width: 540px;"> 
+					<div class="row g-0">
+					<div class="col-md-4 col-sm-4">
+						<img id=fotoProducto src="${img}" class="img-fluid rounded-start">
+			  		</div>
+			  	<div class="col-md-8 col-sm-8">
+				<div class="card-body">
+					<h3 id=tituloProducto class="card-titlesobre">${nombre}</h3>
+				  	<p id=demoraProducto class="card-text2">${demora}</p>
+				  	<p id=precioProducto>$${precio}</p> 
+				  	<p class="card-text"><small class="text-muted">Last updated 3 mins ago</small></p>
+					<p id=descProducto class="card-text2">${desc}</p>
+				  	<button data-id="${id}" id="mybtn" name="btnSeleccionar" class="btn btn-primary">Seleccionar</button>
+					</div>
+			    </div>
+				</div>
+		  		</div>
+				`
+		}
+	});
+	domTurnos.innerHTML = productosVista
+}
 
-mostrarProductos(stockProductos)
+//evento para el boton Seleccionar y que se guarde en el LS
+domTurnos.addEventListener('click', (e) => {
+	if (e.target.id === "mybtn"){
+		Swal.fire({
+			title: '¡Perfecto! Agregaste un item.',
+			icon: 'success',
+			showClass: {
+			  popup: 'animate__animated animate__fadeInDown'
+			},
+			hideClass: {
+			  popup: 'animate__animated animate__fadeOutUp'
+			}
+		  })
+		guardarTurnos(e.target.dataset.id); //recupero la data del elemento que se quiere seleccionar
+	}
+})
 
-//logica Ecommerce
-function mostrarProductos(array){
+//funcion que busca el elemento con ese id del stock
+ 	const guardarTurnos = async(id) => {
+	let productos = await obtenerDatos()
+	let productoEncontrado = productos.find(producto => producto.id === parseInt(id));
+	let productoStorage = JSON.parse(localStorage.getItem(id));
+	if(productoStorage === null){
+		localStorage.setItem(id, JSON.stringify({...productoEncontrado, cantidad:1})) //devuelve todas las prop de un objeto o array.
+		recorrerStorage() //con esta funcion actualizo el carrito.
+	}else{
+		let productoExiste = JSON.parse(localStorage.getItem(id))
+		productoExiste.cantidad = productoExiste.cantidad + 1
+		productoExiste.precio = productoExiste.precio + productoEncontrado.precio
+		localStorage.setItem(id, JSON.stringify(productoExiste))
+		recorrerStorage()
+	}
+}
 
-    contenedorProductos.innerHTML = ""
-
-    for(const el of array) {
-
-        let div = document.createElement('div')
-        div.className = 'producto'
-        div.innerHTML = `<div class="card">
-                                <div class="card-image">
-                                    <img src="${el.img}">
-                                    <span id="nombre" class="card-titlesobre2">${el.nombre}</span>
-                                    <br></br>
-									<a id="boton${el.id}" href="#" class="btn btn-primary">Agregar<i class="bi bi-bag-heart"></i></a>
-                                    <br></br>
-                                </div>
-                                <div class="card-content">
-                                    <p id="desc">${el.desc}</p>
-                                    <p id="precio""> $ ${el.precio}</p>
-                                </div>
-                            </div>`
-
-        contenedorProductos.appendChild(div)
-        
-        let btnAgregar = document.getElementById(`boton${el.id}`)
-        
-        btnAgregar.addEventListener('click',()=>{
-            agregarAlCarrito(el.id);
-        })
-
+//contenedor donde guardamos los items
+const recorrerStorage = () => {
+    carrito.length = 0 //ponemos el carrito en 0 para que no se pisen los productos
+    for (let i = 0; i < localStorage.length; i++) {
+        let clave = localStorage.key(i)
+        carrito.push(JSON.parse(localStorage.getItem(clave)))
     }
-    
-
+	renderCarrito()
 }
 
-
-
-function agregarAlCarrito(id) {
-    let yaExiste = carritoDeCompras.find(elemento => elemento.id == id)
-
-    if(yaExiste){
-        yaExiste.cantidad = yaExiste.cantidad + 1
-        document.getElementById(`cantidad${yaExiste.id}`).innerHTML = `<p id="cantidad${yaExiste.id}">cantidad: ${yaExiste.cantidad}</p>`
-        actualizarCarrito()
-    }else{
-        let productoAgregar = stockProductos.find(ele => ele.id === id)
-        productoAgregar.cantidad = 1 
-carritoDeCompras.push(productoAgregar)
-actualizarCarrito()
-mostrarCarrito(productoAgregar) 
-    }
+const renderCarrito = () => {
+	if (carrito.length > 0){
+		domCarrito.innerHTML = ''
+		carrito.forEach(producto => {
+			const {img, nombre, demora, precio, desc, id, cantidad} = producto
+			domCarrito.innerHTML += `
+			<div id="carrito" class="card" style="width: 18rem;">
+				<img id=fotoProducto src="${img}" class="card-img-top" alt="...">
+				<div class="card-body">
+			  <p id="descProducto" class="card-text2">Seleccionaste ${nombre}</p>
+			  <p id=precioProducto>$${precio}</p>
+			  <p>Cantidad: ${cantidad}</p> 
+			  <button id="eliminar" data-id="${id}" type="button" class="btn btn-secondary">Eliminar</button>
+				</div>
+				</div>`			
+		});
+	} else{
+		domCarrito.innerHTML = `
+		<div id="carritoVacio" class="card mb-3" style="max-width: 540px;">
+		<div class="col-md-4 col-sm-4">
+  			<img src="../img/carritovacio.png" class="card-img-top" alt="bolsa de compras vacia.">
+		<div class="card-body">
+		</div>
+			<p class="card-text">No hay nada seleccionado.</p>
+		</div>
+		</div>`
+	}
 }
 
+domCarrito.addEventListener('click', borrarProducto)
 
-
-function mostrarCarrito(productoAgregar) {
-
-    let div = document.createElement('div')
-    div.classList.add('productoEnCarrito')
-    div.innerHTML =`<p>${productoAgregar.nombre}</p>
-                <p>Precio: $${productoAgregar.precio}</p>
-                <p id="cantidad${productoAgregar.id}">cantidad: ${productoAgregar.cantidad}</p>
-                <button id="eliminar${productoAgregar.id}" class="boton-eliminar"><i class="bi bi-trash"></i></button>`
-    contenedorCarrito.appendChild(div)
-
-    let btnEliminar= document.getElementById(`eliminar${productoAgregar.id}`)
-    btnEliminar.addEventListener('click',()=>{
-        if(productoAgregar.cantidad == 1){
-            btnEliminar.parentElement.remove()
-            carritoDeCompras = carritoDeCompras.filter(item => item.id !== productoAgregar.id)
-            actualizarCarrito()
-        }else{
-            productoAgregar.cantidad = productoAgregar.cantidad - 1
-        document.getElementById(`cantidad${productoAgregar.id}`).innerHTML = `<p id="cantidad${productoAgregar.id}">cantidad: ${productoAgregar.cantidad}</p>`
-        actualizarCarrito()
-        }
-    
-
-    })
+function borrarProducto(e) {
+	if (e.target.id === "eliminar"){
+		let idProducto = e.target.dataset.id
+		//let productoEncontrado = productos.find(producto => producto.id === parseInt(idProducto))
+		let productoStorage = JSON.parse(localStorage.getItem(idProducto))
+		if(productoStorage.cantidad > 1){
+			productoStorage.cantidad = productoStorage.cantidad - 1
+			productoStorage.precio = productoStorage.precio - productoEncontrado.precio
+			localStorage.setItem(idProducto, JSON.stringify(productoStorage))
+			recorrerStorage()
+		}else{
+			localStorage.removeItem(idProducto)
+			recorrerStorage()
+		}
+	}
 }
+recorrerStorage()
+
+fCompra.addEventListener('click',(e) => {
+	Swal.fire({
+		title: 'Finalizaste tu compra :)',
+		icon: 'success',
+		showClass: {
+		  popup: 'animate__animated animate__fadeInDown'
+		},
+		hideClass: {
+		  popup: 'animate__animated animate__fadeOutUp'
+		}
+	  })	
+})
 
 
-function  actualizarCarrito (){
-    contadorCarrito.innerText = carritoDeCompras.reduce((acc,el)=> acc + el.cantidad, 0)
-   precioTotal.innerText = carritoDeCompras.reduce((acc,el)=> acc + (el.precio * el.cantidad) , 0)                                                            
-}
-
-// Comenzamos LocalStorage
-
-const nombre = document.getElementById("nombre")
-const tipo = document.getElementById("tipo")
-const desc = document.getElementById("desc")
-const datos ={nombre:nombre.value, tipo:mostrarProductos, desc:desc.value}
-console.log(datos);
-localStorage.setItem("datos", JSON.stringify(datos))
-
-function obtenerDatos() {
-
-    let storage1 = JSON.parse(localStorage.getItem("datos"))
-    console.log(storage1);
-
-}
-
-obtenerDatos()
